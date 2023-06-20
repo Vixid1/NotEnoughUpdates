@@ -72,6 +72,7 @@ import io.github.moulberry.notenoughupdates.options.seperateSections.WorldConfig
 import io.github.moulberry.notenoughupdates.overlays.MiningOverlay;
 import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
+import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerConfig;
 import io.github.moulberry.notenoughupdates.util.NotificationHandler;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import net.minecraft.client.Minecraft;
@@ -430,7 +431,10 @@ public class NEUConfig extends Config {
 		public HashMap<String, NEUConfig.HiddenLocationSpecific> locationSpecific = new HashMap<>();
 		@Expose
 		public List<NEUConfig.InventoryButton> inventoryButtons = createDefaultInventoryButtons();
-
+		@Expose
+		public HashMap<String, ProfileViewerConfig> profileViewerNew = ProfileViewerConfig.createDefaultPV();
+		@Expose
+		public int currentPVPreset = 0;
 		@Expose
 		public EnumSet<NEUDebugFlag> debugFlags = EnumSet.noneOf(NEUDebugFlag.class);
 		@Expose

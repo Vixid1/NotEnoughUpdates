@@ -52,6 +52,7 @@ import io.github.moulberry.notenoughupdates.overlays.OverlayManager;
 import io.github.moulberry.notenoughupdates.overlays.RancherBootOverlay;
 import io.github.moulberry.notenoughupdates.overlays.TextOverlay;
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer;
+import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerScreen;
 import io.github.moulberry.notenoughupdates.util.ItemUtils;
 import io.github.moulberry.notenoughupdates.util.NotificationHandler;
 import io.github.moulberry.notenoughupdates.util.Rectangle;
@@ -137,6 +138,13 @@ public class RenderListener {
 		if (Minecraft.getMinecraft().currentScreen instanceof GuiProfileViewer) {
 			if (((GuiProfileViewer) Minecraft.getMinecraft().currentScreen).getEntityPlayer() == event.entity) {
 				event.setCanceled(true);
+			}
+		}
+		if (Minecraft.getMinecraft().currentScreen instanceof ProfileViewerScreen) {
+			if (ProfileViewerScreen.Companion.getEntityPlayerOrNull() != null) {
+				if (ProfileViewerScreen.Companion.getEntityPlayerOrNull() == event.entity) {
+					event.setCanceled(true);
+				}
 			}
 		}
 	}

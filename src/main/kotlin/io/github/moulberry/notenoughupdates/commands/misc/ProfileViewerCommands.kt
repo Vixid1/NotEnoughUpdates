@@ -25,6 +25,7 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates
 import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe
 import io.github.moulberry.notenoughupdates.events.RegisterBrigadierCommandEvent
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer
+import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerGui
 import io.github.moulberry.notenoughupdates.util.brigadier.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.OpenGlHelper
@@ -36,6 +37,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 @NEUAutoSubscribe
 class ProfileViewerCommands {
     companion object {
+
+        var type: String = ""
+
         fun CommandContext<ICommandSender>.openPv(name: String) {
             if (!OpenGlHelper.isFramebufferEnabled()) {
                 reply("${RED}Some parts of the profile viewer do not work with OptiFine Fast Render. Go to ESC > Options > Video Settings > Performance > Fast Render to disable it.")
@@ -51,7 +55,8 @@ class ProfileViewerCommands {
                     reply("${RED}Invalid player name/API key. Maybe the API is down? Try /api new.")
                 } else {
                     profile.resetCache()
-                    NotEnoughUpdates.INSTANCE.openGui = GuiProfileViewer(profile)
+                    if (type == "original") NotEnoughUpdates.INSTANCE.openGui = GuiProfileViewer(profile) else
+                        NotEnoughUpdates.INSTANCE.openGui = ProfileViewerGui(profile)
                 }
             }
         }
@@ -75,7 +80,8 @@ class ProfileViewerCommands {
                 }.withHelp("Open the profile viewer for a player")
             }.withHelp("Open the profile viewer for yourself")
         }
-        pvCommand("pv") {}
+        pvCommand("pv") { type = "original" }
+        pvCommand("pv2") { type = "new" }
         pvCommand("neuprofile") {}
         if (!Loader.isModLoaded("skyblockextras"))
             pvCommand("cata") {
