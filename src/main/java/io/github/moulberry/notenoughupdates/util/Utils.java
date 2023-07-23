@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -85,11 +85,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -935,7 +940,11 @@ public class Utils {
 	}
 
 	public static ItemStack createItemStack(Item item, String displayName, int damage, String... lore) {
-		ItemStack stack = new ItemStack(item, 1, damage);
+		return createItemStack(item, displayName, damage, 1, lore);
+	}
+
+	public static ItemStack createItemStack(Item item, String displayName, int damage, int amount, String... lore) {
+		ItemStack stack = new ItemStack(item, amount, damage);
 		NBTTagCompound tag = new NBTTagCompound();
 		addNameAndLore(tag, displayName, lore);
 		tag.setInteger("HideFlags", 254);
@@ -990,6 +999,7 @@ public class Utils {
 
 		return itemStack;
 	}
+
 	public static ItemStack createSkull(String displayName, String uuid, String value) {
 		return createSkull(displayName, uuid, value, null);
 	}
@@ -1522,6 +1532,7 @@ public class Utils {
 			Minecraft.getMinecraft().fontRendererObj
 		);
 	}
+
 	public static JsonObject getConstant(String constant, Gson gson) {
 		return getConstant(constant, gson, JsonObject.class);
 	}
@@ -2250,5 +2261,26 @@ public class Utils {
 			windowId,
 			slot, 0, 0, Minecraft.getMinecraft().thePlayer
 		);
+	}
+
+	public static String timeSinceMillisecond(long time) {
+		Instant lastSave = Instant.ofEpochMilli(time);
+		LocalDateTime lastSaveTime = LocalDateTime.ofInstant(lastSave, TimeZone.getDefault().toZoneId());
+		long timeDiff = System.currentTimeMillis() - lastSave.toEpochMilli();
+		LocalDateTime sinceOnline = LocalDateTime.ofInstant(Instant.ofEpochMilli(timeDiff), ZoneId.of("UTC"));
+		String renderText;
+
+		if (timeDiff < 60000L) {
+			renderText = sinceOnline.getSecond() + " seconds ago";
+		} else if (timeDiff < 3600000L) {
+			renderText = sinceOnline.getMinute() + " minutes ago";
+		} else if (timeDiff < 86400000L) {
+			renderText = sinceOnline.getHour() + " hours ago";
+		} else if (timeDiff < 31556952000L) {
+			renderText = sinceOnline.getDayOfYear() + " days ago";
+		} else {
+			renderText = lastSaveTime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+		}
+		return renderText;
 	}
 }

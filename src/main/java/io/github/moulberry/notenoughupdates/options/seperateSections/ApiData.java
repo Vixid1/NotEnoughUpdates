@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 NotEnoughUpdates contributors
+ * Copyright (C) 2022-2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -57,7 +57,7 @@ public class ApiData {
 	)
 	@ConfigEditorBoolean()
 	@ConfigAccordionId(id = 0)
-	public boolean autoupdate = true;
+	public boolean autoupdate_new = true;
 
 	@ConfigAccordionId(id = 0)
 	@ConfigOption(
@@ -126,6 +126,15 @@ public class ApiData {
 	)
 	@ConfigEditorText
 	public String moulberryCodesApi = "moulberry.codes";
+
+
+	@Expose
+	@ConfigOption(
+		name = "Ursa Minor Proxy",
+		desc = "§4Do §lNOT §r§4change this, unless you know exactly what you are doing"
+	)
+	@ConfigEditorText
+	public String ursaApi = "https://ursa.notenoughupdates.org/";
 
 	public String getCommitApiUrl() {
 		return String.format("https://api.github.com/repos/%s/%s/commits/%s", repoUser, repoName, repoBranch);

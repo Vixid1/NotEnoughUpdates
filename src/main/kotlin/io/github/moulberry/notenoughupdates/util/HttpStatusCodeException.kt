@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 NotEnoughUpdates contributors
+ * Copyright (C) 2023 NotEnoughUpdates contributors
  *
  * This file is part of NotEnoughUpdates.
  *
@@ -17,31 +17,12 @@
  * along with NotEnoughUpdates. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.moulberry.notenoughupdates.util;
+package io.github.moulberry.notenoughupdates.util
 
-public class DiscordMarkdownBuilder {
-	private final StringBuilder builder;
+import java.net.URL
 
-	public DiscordMarkdownBuilder() {
-		this.builder = new StringBuilder();
-		this.builder.append("```md\n");
-	}
-
-	public DiscordMarkdownBuilder category(String name) {
-		builder.append("# ").append(name).append("\n");
-		return this;
-	}
-
-	public DiscordMarkdownBuilder append(String key, Object value) {
-		if (!key.isEmpty()) {
-			builder.append("[").append(key).append("]");
-		}
-		builder.append("[").append(value).append("]").append("\n");
-		return this;
-	}
-
-	@Override
-	public String toString() {
-		return builder.append("```").toString();
-	}
-}
+data class HttpStatusCodeException(
+    val url: URL,
+    val statusCode: Int,
+    val serverMessage: String,
+) : RuntimeException("Server returned HTTP Status Code: $statusCode:\n$serverMessage")

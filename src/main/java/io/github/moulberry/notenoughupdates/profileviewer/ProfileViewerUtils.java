@@ -29,6 +29,7 @@ import io.github.moulberry.notenoughupdates.util.Constants;
 import io.github.moulberry.notenoughupdates.util.JsonUtils;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.JsonToNBT;
@@ -106,7 +107,16 @@ public class ProfileViewerUtils {
 		));
 
 		Set<String> ignoredTalismans = new HashSet<>();
+
+		// While there are several crab hats, only one of them counts towards the magical power
+		boolean countedCrabHat = false;
 		int powerAmount = 0;
+
+		if (profileInfo.has("rift") && profileInfo.getAsJsonObject("rift").has("access") && profileInfo.getAsJsonObject(
+			"rift").getAsJsonObject("access").has("consumed_prism")) { // should be true when existing ?
+			powerAmount += 11;
+		}
+
 		for (Map.Entry<String, Integer> entry : accessories.entrySet()) {
 			if (ignoredTalismans.contains(entry.getKey())) continue;
 
@@ -127,6 +137,7 @@ public class ProfileViewerUtils {
 						break;
 				}
 			}
+
 			if (entry.getKey().equals("ABICASE")) {
 				if (profileInfo != null && profileInfo.has("nether_island_player_data")) {
 					JsonObject data = profileInfo.get("nether_island_player_data").getAsJsonObject();
@@ -136,6 +147,12 @@ public class ProfileViewerUtils {
 					}
 				}
 			}
+
+			if (entry.getKey().startsWith("PARTY_HAT")) {
+				if (countedCrabHat) continue;
+				countedCrabHat = true;
+			}
+
 			switch (entry.getValue()) {
 				case 0:
 				case 6:
@@ -226,6 +243,7 @@ public class ProfileViewerUtils {
 	}
 
 	public static ItemStack getPlayerData(String username) {
+		if (username == null) return new ItemStack(Blocks.stone);
 		String nameLower = username.toLowerCase();
 		if (!playerSkullCache.containsKey(nameLower)) {
 			playerSkullCache.put(nameLower, fallBackSkull());

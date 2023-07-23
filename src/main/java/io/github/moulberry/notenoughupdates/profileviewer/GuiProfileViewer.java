@@ -24,6 +24,7 @@ import io.github.moulberry.notenoughupdates.core.util.StringUtils;
 import io.github.moulberry.notenoughupdates.cosmetics.ShaderManager;
 import io.github.moulberry.notenoughupdates.itemeditor.GuiElementTextField;
 import io.github.moulberry.notenoughupdates.profileviewer.bestiary.BestiaryPage;
+import io.github.moulberry.notenoughupdates.profileviewer.rift.RiftPage;
 import io.github.moulberry.notenoughupdates.profileviewer.trophy.TrophyFishPage;
 import io.github.moulberry.notenoughupdates.profileviewer.weight.weight.DungeonsWeight;
 import io.github.moulberry.notenoughupdates.profileviewer.weight.weight.SkillsWeight;
@@ -211,6 +212,8 @@ public class GuiProfileViewer extends GuiScreen {
 		pages.put(ProfileViewerPage.TROPHY_FISH, new TrophyFishPage(this));
 		pages.put(ProfileViewerPage.BESTIARY, new BestiaryPage(this));
 		pages.put(ProfileViewerPage.CRIMSON_ISLE, new CrimsonIslePage(this));
+		pages.put(ProfileViewerPage.MUSEUM, new MuseumPage(this));
+		pages.put(ProfileViewerPage.RIFT, new RiftPage(this));
 	}
 
 	public static int getGuiLeft() {
@@ -557,6 +560,25 @@ public class GuiProfileViewer extends GuiScreen {
 				}
 			}
 		}
+		int x = guiLeft + sizeX;
+		int y = guiTop;
+		List<String> previousProfileSearches = NotEnoughUpdates.INSTANCE.config.hidden.previousProfileSearches;
+
+		if (mouseX > x && mouseX < x + 29) {
+			if (mouseY > y && mouseY < y + 28) {
+				tooltipToDisplay = new ArrayList<>();
+				tooltipToDisplay.add(Minecraft.getMinecraft().thePlayer.getName());
+			}
+		}
+
+		for (int i = 0; i < previousProfileSearches.size(); i++) {
+			if (mouseX > x && mouseX < x + 28) {
+				if (mouseY > y + 28 * (i + 1) && mouseY < y + 28 * (i + 2)) {
+					tooltipToDisplay = new ArrayList<>();
+					tooltipToDisplay.add(previousProfileSearches.get(i));
+				}
+			}
+		}
 
 		if (tooltipToDisplay != null) {
 			List<String> grayTooltip = new ArrayList<>(tooltipToDisplay.size());
@@ -888,7 +910,7 @@ public class GuiProfileViewer extends GuiScreen {
 		if (levelObj.maxed) {
 			renderGoldBar(x, y + 6, xSize);
 		} else {
-			if (skillName.contains("Catacombs") && levelObj.level >= 50) {
+			if ((skillName.contains("Catacombs") || Weight.DUNGEON_CLASS_NAMES.stream().anyMatch(e -> skillName.toLowerCase().contains(e))) && levelObj.level >= 50) {
 				renderGoldBar(x, y + 6, xSize);
 			} else {
 				renderBar(x, y + 6, xSize, level % 1);
@@ -1183,7 +1205,9 @@ public class GuiProfileViewer extends GuiScreen {
 		BINGO(7, Items.filled_map, "§zBingo"),
 		TROPHY_FISH(8, Items.fishing_rod, "§3Trophy Fish"),
 		BESTIARY(9, Items.iron_sword, "§cBestiary"),
-		CRIMSON_ISLE(10, Item.getItemFromBlock(Blocks.netherrack), "§4Crimson Isle");
+		CRIMSON_ISLE(10, Item.getItemFromBlock(Blocks.netherrack), "§4Crimson Isle"),
+		MUSEUM(11, Items.leather_chestplate, "§6Museum"),
+		RIFT(12, Items.ender_eye, "§5Rift");
 
 		public final ItemStack stack;
 		public final int id;
