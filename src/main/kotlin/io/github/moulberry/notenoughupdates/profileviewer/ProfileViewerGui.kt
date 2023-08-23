@@ -23,48 +23,14 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates
 import io.github.moulberry.notenoughupdates.util.Utils
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GlStateManager
+import net.minecraft.util.EnumChatFormatting
 import org.lwjgl.opengl.GL11
 import java.awt.Color
 
-class ProfileViewerGui(profile: SkyblockProfiles) : ProfileViewerScreen(profile) {
-
-    // Probably don't need these in this class
-    // private val pv_elements = ResourceLocation("notenoughupdates:pv_elements.png")
-    // private val pv_ironman = ResourceLocation("notenoughupdates:pv_ironman.png")
-    // private val pv_bingo = ResourceLocation("notenoughupdates:pv_bingo")
-
-    // private var pages: HashMap<Int, ProfileViewerPage> = hashMapOf()
-    // var currentPage: ProfileViewerPage = ProfileViewerPage()
-
-    // private var profile: ProfileViewer.Profile
-    // private var profileId: String
-
-
-
-    // private var playerNameTextField: GuiElementTextField
-
-//    init {
-//        this.profile = profile
-//        this.profileId = profile.latestProfile
-//
-//        var playerName = ""
-//        if (profile.hypixelProfile != null) {
-//            playerName = profile.hypixelProfile!!.get("displayname").asString
-//        }
-//
-//        // if (currentPage.isLoading()) currentPage = pages.get(0)
-//
-//        playerNameTextField = GuiElementTextField(playerName, GuiElementTextField.SCALE_TEXT)
-//        playerNameTextField.setSize(100, 20)
-//    }
+class ProfileViewerGui(val profile: SkyblockProfiles) : ProfileViewerScreen(profile) {
 
     override fun drawScreen(mouseX: Int, mouseY: Int, partialTicks: Float) {
         super.drawScreen(mouseX, mouseY, partialTicks)
-
-        // Render the page tabs
-        // ...
-        // Will need to read config for existing pages
-        // Will probably need to hardcode the existing pv layout to begin with
 
         // Stuff to do when page is not the loading page
         // ...
@@ -77,8 +43,6 @@ class ProfileViewerGui(profile: SkyblockProfiles) : ProfileViewerScreen(profile)
 
         // Draw loading text
         // ...
-
-
 
         // Page ordering or smth
         // ...
@@ -101,7 +65,14 @@ class ProfileViewerGui(profile: SkyblockProfiles) : ProfileViewerScreen(profile)
 
         if (mouseX >= guiLeft - 150 && mouseX <= guiLeft - 50 &&
             mouseY >= guiTop && mouseY <= guiTop + 20) {
-            NotEnoughUpdates.INSTANCE.openGui = ProfileViewerEditor(profile)
+            NotEnoughUpdates.profileViewer.loadPlayerByName(playerName) {
+                if (it == null) {
+                    Utils.addChatMessage(EnumChatFormatting.RED.toString() + "Invalid player name/API key. Maybe the API is down?")
+                } else {
+                    it.resetCache()
+                    NotEnoughUpdates.INSTANCE.openGui = ProfileViewerEditor(it)
+                }
+            }
         }
     }
 }

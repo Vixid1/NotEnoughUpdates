@@ -19,12 +19,14 @@
 
 package io.github.moulberry.notenoughupdates.profileviewer.widgets.collection
 
+import io.github.moulberry.notenoughupdates.core.config.Position
 import io.github.moulberry.notenoughupdates.profileviewer.widgets.WidgetInterface
 
 class CollectionCountWidget(
     override val widgetName: String,
-    override var position: List<Int>,
-    override val shadowText: Boolean
+    override var position: Position,
+    override val shadowText: Boolean,
+    override var size: MutableList<Int>
 ) : WidgetInterface {
 
     override fun render(mouseX: Int, mouseY: Int) {

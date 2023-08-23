@@ -23,6 +23,7 @@ import com.google.gson.JsonObject
 import com.mojang.authlib.GameProfile
 import com.mojang.authlib.minecraft.MinecraftProfileTexture
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates
+import io.github.moulberry.notenoughupdates.core.config.Position
 import io.github.moulberry.notenoughupdates.profileviewer.Panorama
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerScreen
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerScreen.Companion.currentTime
@@ -35,6 +36,7 @@ import io.github.moulberry.notenoughupdates.util.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.entity.EntityOtherPlayerMP
 import net.minecraft.client.gui.GuiScreen
+import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.OpenGlHelper
 import net.minecraft.client.renderer.RenderHelper
@@ -55,21 +57,19 @@ import kotlin.math.sin
 
 class PlayerModelWidget(
     override val widgetName: String,
-    override var position: List<Int>,
-    override val shadowText: Boolean
+    override var position: Position,
+    override val shadowText: Boolean,
+    override var size: MutableList<Int> = mutableListOf(90, 130)
 ) : WidgetInterface {
+    
+    private lateinit var scaledRes: ScaledResolution
 
-    val size: Pair<Int, Int> = Pair(90, 185)
-
-    var posX = -999
-    var posY = -999
-
-    private val selectedProfile: SkyblockProfiles.SkyblockProfile? = getSelectedProfile()
+    private var selectedProfile: SkyblockProfiles.SkyblockProfile? = getSelectedProfile()
 
     private val panoramaOverlay = ResourceLocation("notenoughupdates:pv_panorama_overlay.png")
 
     private var panoramaClickedX: Int = -1
-    private var panoramaRotation: Int = 0
+    private var panoramaRotation: Float = 0f
 
     private var pronouns: AsyncDependencyLoader<Optional<PronounDB.PronounChoice>> = AsyncDependencyLoader.withEqualsInvocation({
         if (NotEnoughUpdates.INSTANCE.config.profileViewer.showPronounsInPv)
@@ -82,27 +82,23 @@ class PlayerModelWidget(
             else
                 CompletableFuture.completedFuture(Optional.empty())})
 
-    //private lateinit var entityPlayer: EntityOtherPlayerMP
-    public var entityPlayer: EntityOtherPlayerMP? = null
+    var entityPlayer: EntityOtherPlayerMP? = null
     private var profileLoader = Executors.newFixedThreadPool(1)
     private var playerLocationSkin: ResourceLocation? = null
     private var playerLocationCape: ResourceLocation? = null
     private var entitySkinType: String? = null
     private var loadingProfile = false
 
-    companion object {
-        var needsNewPlayer = false
-    }
-
     override fun render(mouseX: Int, mouseY: Int) {
+        scaledRes = ScaledResolution(Minecraft.getMinecraft())
+        
         val width = Minecraft.getMinecraft().displayWidth
         val height = Minecraft.getMinecraft().displayHeight
 
-        val guiLeft = ProfileViewerScreen.guiLeft
-        val guiTop = ProfileViewerScreen.guiTop
+        val posX = position.getAbsX(scaledRes, size[0])
+        val posY = position.getAbsY(scaledRes, size[1])
 
-        posX = guiLeft + position[0]
-        posY = guiTop + position[1]
+        if (selectedProfile == null) selectedProfile = getSelectedProfile()
 
         // Get player location
         var location = ""
@@ -127,7 +123,7 @@ class PlayerModelWidget(
         }
 
         if (panoramaClickedX == -1) {
-            panoramaRotation += ((currentTime - ProfileViewerScreen.lastTime) / 400f).toInt()
+            panoramaRotation += (currentTime - ProfileViewerScreen.lastTime) / 400f
         } else {
             extraRotation = mouseX - panoramaClickedX
         }
@@ -141,12 +137,14 @@ class PlayerModelWidget(
             }
         }
 
-        Panorama.drawPanorama((-panoramaRotation - extraRotation).toFloat(), posX + 5, posY + 5,
+        Panorama.drawPanorama(
+            (-panoramaRotation - extraRotation), posX + 5, posY + 5,
             81, 108, 0.37f, 0.8f,
             Panorama.getPanoramasForLocation((location.ifBlank { "unknown" }), panoramaIdentifier))
 
         // Pronoun hover
-        if (mouseX >= posX + 5 && mouseX <= posX + 86 && mouseY >= posY + 5 && mouseY <= posY + 113) {
+        if (mouseX >= posX + 5 && mouseX <= posX + 86 &&
+            mouseY >= posY + 5 && mouseY <= posY + 113) {
             val pronounChoice = pronouns.peekValue().flatMap { it }
             if (pronounChoice.isPresent) {
                 val pronoun = pronounChoice.get()
@@ -162,7 +160,6 @@ class PlayerModelWidget(
 
         loadPlayerIntoEntity()
 
-        //if (this::entityPlayer.isInitialized) {
         if (entityPlayer != null) {
             loadAndRenderPet()
 
@@ -221,10 +218,10 @@ class PlayerModelWidget(
 
                         playerName = EnumChatFormatting.GRAY.toString() + name
                         if (rankName != null) {
-                            val icon = if (selectedProfile?.gamemode != null) getIcon(selectedProfile.gamemode) else ""
+                            val icon = if (selectedProfile?.gamemode != null) getIcon(selectedProfile?.gamemode) else ""
 
                             playerName = "§$rankColor[$rankName$rankPlusColor$rankPlus§$rankColor] $name" +
-                                    (if (icon == "") "" else icon)
+                                    (if (icon == "") "" else " $icon")
                         }
                     }
                 }
@@ -234,8 +231,8 @@ class PlayerModelWidget(
                 val rankPrefixLen = Minecraft.getMinecraft().fontRendererObj.getStringWidth(playerName)
                 val halfRankPrefixLen = rankPrefixLen / 2
 
-                val x = posX + (size.first / 2)
-                val y = posY + 10
+                val x = position.getAbsX(scaledRes, size[0]) + (size[0] / 2)
+                val y = position.getAbsY(scaledRes, size[1]) + 15
 
                 GuiScreen.drawRect(
                     x - halfRankPrefixLen - 1,
@@ -247,7 +244,7 @@ class PlayerModelWidget(
 
                 GlStateManager.color(1f, 1f, 1f, 1f)
                 Minecraft.getMinecraft().fontRendererObj.drawString(playerName,
-                    (x - halfRankPrefixLen).toFloat(), (y + 5).toFloat(), 0, true)
+                    (x - halfRankPrefixLen).toFloat(), y.toFloat(), 0, true)
             }
         }
     }
@@ -284,13 +281,12 @@ class PlayerModelWidget(
                 statusStr += EnumChatFormatting.GRAY.toString() + " - " + EnumChatFormatting.GREEN.toString() + locationStr
             }
 
-            Utils.drawStringCentered(statusStr, (posX + size.first / 2).toFloat(), (posY + 122).toFloat(), true, 0)
+            Utils.drawStringCentered(statusStr, (position.getAbsX(scaledRes, size[0]) + size[0] / 2).toFloat(), (position.getAbsY(scaledRes, size[1]) + 122).toFloat(), true, 0)
         }
         GlStateManager.color(1f, 1f, 1f, 1f)
     }
 
     private fun loadPlayerIntoEntity() {
-        //if (!this::entityPlayer.isInitialized) {
         if (entityPlayer == null) {
             if (!loadingProfile || (profileLoader as ThreadPoolExecutor).activeCount == 0) {
                 loadingProfile = true
@@ -328,7 +324,6 @@ class PlayerModelWidget(
             entityPlayer?.dataWatcher?.updateObject(10, layers)
         }
 
-        //if (this::entityPlayer.isInitialized && playerLocationSkin == null) {
         if (entityPlayer != null && playerLocationSkin == null) {
             try {
                 Minecraft
@@ -368,7 +363,6 @@ class PlayerModelWidget(
     private fun populateEntityArmor() {
         val inventoryInfo = selectedProfile?.inventoryInfo
 
-        //if (this::entityPlayer.isInitialized) {
         if (entityPlayer != null) {
             if (panoramaClickedX != -1 && Mouse.isButtonDown(1)) {
                 entityPlayer?.inventory?.armorInventory?.fill(null)
@@ -412,12 +406,12 @@ class PlayerModelWidget(
                 val activePet = activePetElement.asJsonObject
                 val type = activePet.get("type").asString
 
-                for (i in 0 until 4) {
+                for (i in 0 until 6) {
                     val item = NotEnoughUpdates.INSTANCE.manager.itemInformation["$type;$i"]
 
                     if (item != null) {
-                        val x = posX + 2
-                        val y = posY + 45f + 15f * sin(((currentTime - startTime) / 800f) % (2 * Math.PI))
+                        val x = position.getAbsX(scaledRes, size[0]) + 2
+                        val y = position.getAbsY(scaledRes, size[1]) + 45f + 15f * sin(((currentTime - startTime) / 800f) % (2 * Math.PI))
 
                         GlStateManager.translate(x.toFloat(), y.toFloat(), 0f)
                         val stack = NotEnoughUpdates.INSTANCE.manager.jsonToStack(item, false)
@@ -489,6 +483,7 @@ class PlayerModelWidget(
         playerLocationSkin = null
         playerLocationCape = null
         entitySkinType = null
+        selectedProfile = null
     }
 
 }

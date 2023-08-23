@@ -24,8 +24,8 @@ import io.github.moulberry.notenoughupdates.NotEnoughUpdates
 import io.github.moulberry.notenoughupdates.autosubscribe.NEUAutoSubscribe
 import io.github.moulberry.notenoughupdates.events.RegisterBrigadierCommandEvent
 import io.github.moulberry.notenoughupdates.profileviewer.GuiProfileViewer
-import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerUtils
 import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerGui
+import io.github.moulberry.notenoughupdates.profileviewer.ProfileViewerUtils
 import io.github.moulberry.notenoughupdates.util.brigadier.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.OpenGlHelper
@@ -46,7 +46,6 @@ class ProfileViewerCommands {
                 return
             }
 
-        fun CommandContext<ICommandSender>.openPv(name: String) {
             if (!OpenGlHelper.isFramebufferEnabled()) {
                 reply("${RED}Some parts of the profile viewer do not work with OptiFine Fast Render. Go to ESC > Options > Video Settings > Performance > Fast Render to disable it.")
             }
@@ -91,7 +90,5 @@ class ProfileViewerCommands {
             pvCommand("cata") {
                 GuiProfileViewer.currentPage = GuiProfileViewer.ProfileViewerPage.DUNGEON
             }
-
-
     }
 }

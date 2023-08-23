@@ -19,6 +19,8 @@
 
 package io.github.moulberry.notenoughupdates.profileviewer.widgets
 
+import io.github.moulberry.notenoughupdates.core.config.Position
+
 interface WidgetInterface {
 
     /**
@@ -28,12 +30,16 @@ interface WidgetInterface {
     /**
      * Current x, y offset from guiLeft and guiTop respectively for widget position
      */
-    var position: List<Int>
+    var position: Position
     /**
      * Whether to render text in this widget with shadows or not (not all widgets
      * have text so this will do nothing for some widgets)
      */
     val shadowText: Boolean
+    /**
+     * Size of the widget, mostly used for moving the widget in editor screen.
+     */
+    var size: MutableList<Int>
 
     fun render(mouseX: Int, mouseY: Int)
 

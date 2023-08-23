@@ -60,6 +60,7 @@ import io.github.moulberry.notenoughupdates.util.Rectangle;
 import io.github.moulberry.notenoughupdates.util.SBInfo;
 import io.github.moulberry.notenoughupdates.util.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
@@ -142,8 +143,8 @@ public class RenderListener {
 			}
 		}
 		if (Minecraft.getMinecraft().currentScreen instanceof ProfileViewerScreen) {
-			if (ProfileViewerScreen.Companion.getEntityPlayerOrNull() != null) {
-				if (ProfileViewerScreen.Companion.getEntityPlayerOrNull() == event.entity) {
+			if (ProfileViewerScreen.Companion.getEntityPlayersOrNull() != null) {
+				if (ProfileViewerScreen.Companion.getEntityPlayersOrNull().contains((EntityOtherPlayerMP)event.entity)) {
 					event.setCanceled(true);
 				}
 			}

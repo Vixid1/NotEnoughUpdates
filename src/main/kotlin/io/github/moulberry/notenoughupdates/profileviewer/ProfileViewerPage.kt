@@ -20,6 +20,7 @@
 package io.github.moulberry.notenoughupdates.profileviewer
 
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates
+import io.github.moulberry.notenoughupdates.core.config.Position
 import io.github.moulberry.notenoughupdates.profileviewer.widgets.WidgetInterface
 import io.github.moulberry.notenoughupdates.profileviewer.widgets.Widgets
 import net.minecraft.item.ItemStack
@@ -39,7 +40,7 @@ class ProfileViewerPage(val pageIndex: Int, pageConfig: PageConfig) {
         }
     }
 
-    private fun createPageWidgets(widget: Widgets, pos: List<Int>, shadowText: Boolean) {
+    private fun createPageWidgets(widget: Widgets, pos: Position, shadowText: Boolean) {
         val clazz = widget.classDef
 
         val primaryConstructor = clazz.primaryConstructor ?: return
@@ -52,6 +53,7 @@ class ProfileViewerPage(val pageIndex: Int, pageConfig: PageConfig) {
         args[paramFields[1]] = pos
         // Shadow text
         args[paramFields[2]] = shadowText
+        // No need to pass size parameter as all widgets should have a default value that they use
 
         widgets.add(primaryConstructor.callBy(args))
     }

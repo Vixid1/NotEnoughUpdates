@@ -22,8 +22,10 @@ package io.github.moulberry.notenoughupdates.profileviewer
 import io.github.moulberry.notenoughupdates.NotEnoughUpdates
 import io.github.moulberry.notenoughupdates.core.GlScissorStack
 import io.github.moulberry.notenoughupdates.core.GuiElementTextField
+import io.github.moulberry.notenoughupdates.core.config.Position
 import io.github.moulberry.notenoughupdates.core.util.render.RenderUtils
 import io.github.moulberry.notenoughupdates.miscgui.GuiInvButtonEditor
+import io.github.moulberry.notenoughupdates.profileviewer.widgets.WidgetInterface
 import io.github.moulberry.notenoughupdates.profileviewer.widgets.Widgets
 import io.github.moulberry.notenoughupdates.util.ScrollBar
 import io.github.moulberry.notenoughupdates.util.Utils
@@ -40,15 +42,17 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.floor
-import kotlin.properties.Delegates
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.primaryConstructor
 
-class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profile) {
+class ProfileViewerEditor(val profile: SkyblockProfiles) : ProfileViewerScreen(profile) {
 
     private val widgetDropdown = ResourceLocation("notenoughupdates:pv_add_widgets.png")
     private val newPageDropdown = ResourceLocation("notenoughupdates:pv_add_new_page.png")
     private val deleteIcon = ResourceLocation("notenoughupdates:core/delete.png")
 
     private lateinit var scaledRes: ScaledResolution
+    private lateinit var widgets: MutableList<WidgetInterface>
 
     private val colors = "0123456789abcdef"
 
@@ -70,6 +74,9 @@ class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profi
     private val widgetScrollBar = ScrollBar()
     private var widgetMenu = false
 
+    private var grabbedX = 0
+    private var grabbedY = 0
+
     override fun initGui() {
         val widgetMaxSize = (Widgets.values().size - 12) * 20 - 10
         widgetScrollBar.maxScroll = widgetMaxSize
@@ -87,6 +94,11 @@ class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profi
         super.drawScreen(mouseX, mouseY, partialTicks)
 
         scaledRes = ScaledResolution(Minecraft.getMinecraft())
+
+        val pages = getCurrentPresetPages()
+        if (pages.isNotEmpty()) {
+            widgets = pages[selectedPage].widgets
+        }
 
         Utils.drawStringCentered("Profile Viewer Editor",
             (this.width / 2).toFloat(), (this.height * 0.15).toFloat(), false, Color(255, 128, 32).rgb
@@ -115,6 +127,8 @@ class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profi
 
         renderNewPageMenu()
         renderWidgetMenu()
+
+        handleWidgetsHover(mouseX, mouseY)
     }
 
     override fun mouseClicked(mouseX: Int, mouseY: Int, mouseButton: Int) {
@@ -229,7 +243,28 @@ class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profi
                     if (mouseX >= (widgetMenuX + 5) && mouseX <= (widgetMenuX + 246) &&
                         mouseY >= widgetMenuY + 5 + (i * 20) - widgetScrollBar.scroll.value &&
                         mouseY <= widgetMenuY + 23 + (i * 20) - widgetScrollBar.scroll.value) {
+                        // TODO: add widget creation here
                         Utils.addChatMessage("Pressed " + Widgets.values()[i].widgetName)
+
+                        Widgets.getWidget(i)?.let {
+                            val clazz = it.classDef
+
+                            val pos = Position(mouseX, mouseY)
+
+                            val primaryConstructor = clazz.primaryConstructor ?: return
+                            val paramFields = primaryConstructor.parameters
+                            val args = mutableMapOf<KParameter, Any>()
+
+                            // Widget name
+                            args[paramFields[0]] = it.widgetName
+                            // Widget position
+                            args[paramFields[1]] = pos
+                            // Shadow text
+                            args[paramFields[2]] = false
+                            // No need to pass size parameter as all widgets should have a default value that they use
+
+                            widgets.add(primaryConstructor.callBy(args))
+                        }
                     }
                 }
             }
@@ -239,6 +274,51 @@ class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profi
         if (mouseX >= (guiLeft / 2 - 50) && mouseX <= (guiLeft / 2 + 50) &&
             mouseY >= (guiTop - 60) && mouseY <= (guiTop - 40)) {
             widgetMenu = !widgetMenu
+        }
+
+        // Check for click on a widget
+        if (widgets.isNotEmpty()) {
+            for (widget in widgets) {
+
+                val posX = widget.position.getAbsX(scaledRes, widget.size[0])
+                val posY = widget.position.getAbsY(scaledRes, widget.size[1])
+
+                if (mouseX >= posX && mouseX <= posX + widget.size[0] &&
+                    mouseY >= posY && mouseY <= posY + widget.size[1]) {
+
+                    widget.position.clicked = true
+                    grabbedX = mouseX
+                    grabbedY = mouseY
+                }
+            }
+
+            // Check for click on delete button
+            widgets.removeIf {
+                val posX = it.position.getAbsX(scaledRes, it.size[0])
+                val posY = it.position.getAbsY(scaledRes, it.size[1])
+
+                mouseX >= posX + it.size[0] - 5 && mouseX <= posX + it.size[0] && mouseY >= posY && mouseY <= posY + 5
+            }
+        }
+    }
+
+    override fun mouseClickMove(mouseX: Int, mouseY: Int, clickedMouseButton: Int, timeSinceLastClick: Long) {
+        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick)
+
+        for (widget in widgets) {
+            if (widget.position.clicked) {
+
+                grabbedX += widget.position.moveX(mouseX - grabbedX, widget.size[0], scaledRes)
+                grabbedY += widget.position.moveY(mouseY - grabbedY, widget.size[1], scaledRes)
+            }
+        }
+    }
+
+    override fun mouseReleased(mouseX: Int, mouseY: Int, state: Int) {
+        super.mouseReleased(mouseX, mouseY, state)
+
+        for (widget in widgets) {
+            widget.position.clicked = false
         }
     }
 
@@ -323,6 +403,10 @@ class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profi
 
         GlStateManager.color(1f, 1f, 1f, 1f)
 
+        GlStateManager.pushMatrix()
+        // Translate the menu forward in case of any entity rendering (i.e. EntityPlayer)
+        GlStateManager.translate(0f, 0f, 100f)
+
         Minecraft.getMinecraft().textureManager.bindTexture(newPageDropdown)
         Utils.drawTexturedRect(x.toFloat(), y.toFloat(), 202f, 251f, 0f, 202f / 256f, 5f / 256f, 1f, GL11.GL_NEAREST)
 
@@ -381,6 +465,8 @@ class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profi
         }
 
         GlScissorStack.pop(scaledRes)
+
+        GlStateManager.popMatrix()
 
         // Need to render tooltip outside scissor
         Utils.drawHoveringText(tooltipToRender, mouseX.toInt(), mouseY.toInt(), width, height, 0)
@@ -442,6 +528,41 @@ class ProfileViewerEditor(profile: SkyblockProfiles) : ProfileViewerScreen(profi
                     x + 238,
                     y + 23 + (i * 20) - widgetScrollBar.scroll.value,
                     Color(200, 200, 200, 128).rgb)
+            }
+        }
+    }
+
+    private fun handleWidgetsHover(mouseX: Int, mouseY: Int) {
+        if (widgets.isNotEmpty()) {
+            for (widget in widgets) {
+
+                val posX = widget.position.getAbsX(scaledRes, widget.size[0])
+                val posY = widget.position.getAbsY(scaledRes, widget.size[1])
+
+                if (mouseX >= posX && mouseX <= posX + widget.size[0] &&
+                    mouseY >= posY && mouseY <= posY + widget.size[1]) {
+
+                    drawRect(posX, posY, posX + widget.size[0], posY + widget.size[1],
+                        Color(200, 200, 200, 128).rgb)
+
+                    val strWidth = fontRendererObj.getStringWidth("X: $posX Y: $posY")
+
+                    GlStateManager.pushMatrix()
+                    // Translate the coords and delete label above the tab item stacks in case the label is over it
+                    GlStateManager.translate(0f, 0f, 15f)
+
+                    // Coords label
+                    drawRect(posX - 20, posY - 18, posX - 3 + strWidth, posY - 5,
+                        Color(0, 0, 0, 64).rgb)
+                    Utils.drawStringF("X: $posX Y: $posY", posX - 14f, posY - 15f, false, Color.WHITE.rgb)
+
+                    // Delete button
+                    drawRect(posX + widget.size[0] - 5, posY - 5, posX + widget.size[0] + 5,
+                        posY + 5, Color(0, 0, 0, 64).rgb)
+                    Utils.drawStringCentered("X", (posX + widget.size[0]).toFloat(), posY + 1f, false, Color.RED.rgb)
+
+                    GlStateManager.popMatrix()
+                }
             }
         }
     }

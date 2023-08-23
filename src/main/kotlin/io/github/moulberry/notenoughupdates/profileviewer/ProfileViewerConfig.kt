@@ -20,6 +20,7 @@
 package io.github.moulberry.notenoughupdates.profileviewer
 
 import com.google.gson.annotations.Expose
+import io.github.moulberry.notenoughupdates.core.config.Position
 
 class ProfileViewerConfig(pageList: MutableList<PageConfig>) {
 
@@ -42,7 +43,7 @@ class ProfileViewerConfig(pageList: MutableList<PageConfig>) {
 
                     val widgetConfig = WidgetConfig(
                         0,
-                        listOf(200, 100),
+                        Position(275, 190),
                         false
                     )
 
@@ -94,7 +95,7 @@ class PageConfig(
     @Expose
     var widgets: List<WidgetConfig> = mutableListOf(),
     @Expose
-    var sideTabs: List<SidePageConfig> = mutableListOf()) {}
+    var sideTabs: List<SidePageConfig> = mutableListOf())
 
 class SidePageConfig(
     @Expose
@@ -106,12 +107,12 @@ class SidePageConfig(
     @Expose
     var itemStack: String = "",
     @Expose
-    var widgets: List<WidgetConfig> = mutableListOf()) {}
+    var widgets: List<WidgetConfig> = mutableListOf())
 
 class WidgetConfig(
     @Expose
     var widgetId: Int? = null,
     @Expose
-    var position: List<Int> = listOf(),
+    var position: Position,
     @Expose
-    var shadowText: Boolean = false) {}
+    var shadowText: Boolean = false)
